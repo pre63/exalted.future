@@ -1,0 +1,47 @@
+{
+  "name": "exalted.future",
+  "version": "0.0.11",
+  "description": "Exalted monadic library & functional fun, fantasy-land compliant, mostly.",
+  "repository": "https://github.com/pre63/exalted.future.git",
+  "author": "pre63",
+  "license": "Apache-2.0",
+  "main": "dist/index.cjs",
+  "module": "dist/index.esm.js",
+  "browser": "dist/index.umd.js",
+  "type": "module",
+  "private": false,
+  "sideEffects": false,
+  "scripts": {
+    "rollup": "./node_modules/.bin/rollup -c",
+    "build": "yarn rollup",
+    "deploy": "yarn build && yarn publish",
+    "test": "node --experimental-vm-modules ./node_modules/.bin/jest --coverage"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.12.1",
+    "@rollup/plugin-babel": "^5.2.1",
+    "@rollup/plugin-commonjs": "^16.0.0",
+    "@rollup/plugin-node-resolve": "^10.0.0",
+    "jest": "^26.6.1",
+    "rollup": "^2.32.1",
+    "rollup-plugin-sizes": "^1.0.3"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "fp",
+    "exalted",
+    "fantasy-land",
+    "algebraic",
+    "control-flow",
+    "async",
+    "functor",
+    "monad",
+    "maybe",
+    "either",
+    "future",
+    "types",
+    "fun"
+  ]
+}
