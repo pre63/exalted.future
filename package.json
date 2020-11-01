@@ -16,6 +16,7 @@
     "build": "yarn rollup",
     "pub": "rm -rf dist && yarn build && yarn publish",
     "test": "jest ./ci/*",
+    "pretest": "yarn build",
     "specs": "node --experimental-vm-modules ./node_modules/.bin/jest ./specs/* --coverage"
   },
   "devDependencies": {
