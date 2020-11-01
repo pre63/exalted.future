@@ -1,3 +1,7 @@
+![](https://badgen.net/bundlephobia/minzip/exalted.future)
+![](https://badgen.net/bundlephobia/tree-shaking/exalted.future)
+![](https://badgen.net/bundlephobia/dependency-count/exalted.future)
+![](https://badgen.net/travis/exalted.future)
 # exalted.future
 
 ## *Experimental*
