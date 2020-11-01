@@ -11,7 +11,7 @@ export const Future = action => ({
   cata: f => action(f, f)
 })
 
-Future.of = x => Future((reject, resolve) => resolve(x))
+Future.of = x => Future((_, resolve) => resolve(x))
 
 Future.fromPromise = promise =>
   Future((reject, resolve) => Future.fromPromise(promise.then(resolve, reject)))

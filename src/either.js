@@ -1,19 +1,19 @@
-const isNull = value => value === null || value === undefined
+import { isNull , iff } from './id'
 
-const identity = a => a
+const eq = (a, r) => r.cata({ Right: b => a === b, Left: b => a === b })
 
 export const Right = a => ({
-  ap: app => (app.isLeft ? app : app.map((b = identity) => b(a))),
-  bimap: (left = identity, right = identity) => right(a),
-  cata: (f = { Right: identity }) => f.Right(a),
-  chain: (f = identity) => f(a),
-  equals: r => r.cata({ Right: b => a === b, Left: b => a === b }),
-  fold: (f = identity) => f(a),
-  foldl: (f = identity) => f(null),
-  foldr: (f = identity) => f(a),
-  inspect: () => `Right(${a})`,
+  ap: app => (app.isLeft ? app : app.map((b) => iff(b,a))),
+  bimap: (_, r) => iff(r, a),
+  cata: (f = Identity) => f.Right(a),
+  chain: (f) => iff(f,a),
+  equals: r => eq(a,r),
+  fold: (f) => iff(f, a),
+  foldl: (f) => iff(f, null),
+  foldr: (f) => iff(f,a),
+  inspect: () => 'Right(' + a + ')',
   isLeft: false,
-  map: (f = identity) => Right(f(a)),
+  map: (f) => Right(iff(f,a)),
   of: a => Right(a),
   swap: () => Left(a)
 })
@@ -22,15 +22,15 @@ Right.of = a => Right(a)
 
 export const Left = a => ({
   ap: app => (app.isLeft ? app : Left(a)),
-  bimap: (left = identity, right = identity) => left(a),
-  cata: (f = { Left: identity }) => f.Left(a),
+  bimap: (l, _) => iff(l, a),
+  cata: (f = Identity) => f.Left(a),
   chain: () => Left(a),
   map: () => Left(a),
-  equals: l => l.cata({ Left: b => a === b, Right: b => a === b }),
-  fold: (f = identity) => f(a),
-  foldl: (f = identity) => f(a),
-  foldr: (f = identity) => f(null),
-  inspect: () => `Left(${a})`,
+  equals: l => eq(a,l),
+  fold: (f) => iff(f,a),
+  foldl: (f ) => iff(f,a),
+  foldr: (f ) => iff(f, null),
+  inspect: () => 'Left(' + a + ')',
   isLeft: true,
   of: a => Left(a),
   swap: () => Right(a)
@@ -42,9 +42,9 @@ export const nullable = x => (isNull(x) ? Left(x) : Right(x))
 
 export const Either = (l, r) => [Left(l), Right(r)]
 
-const encase = (f = identity) => {
+const encase = (f) => {
   try {
-    return Right(f(null))
+    return Right(iff(f, null))
   } catch (err) {
     return Left(err)
   }

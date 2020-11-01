@@ -103,7 +103,7 @@ dist
 # TernJS port file
 .tern-port
 
-*.more.spec
+*more.spec*
 
 coverage
 

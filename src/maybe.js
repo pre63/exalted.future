@@ -1,21 +1,15 @@
-const isNull = value => value === null || value === undefined
-
-export const Maybe = a => (isNull(a) ? Nothing() : Just(a))
-
-Maybe.of = a => Maybe(a)
-
-const identity = a => a
+import { Identity, isNull, noop, iff } from './id'
 
 export const Nothing = () => ({
   ap: () => Nothing(),
-  bimap: (left = identity, right = identity) => left(null),
-  cata: (f = { Left: identity }) => f.Left(null),
+  bimap: (l, _) => iff(l,null),
+  cata: (f = Identity) => f.Left(null),
   chain: () => Nothing(),
-  alt: (f = identity) => Maybe(f(null)),
+  alt: (f ) => Maybe(iff(f,null)),
   equals: id => id.cata({ Right: b => isNull(b) }),
-  fold: () => {},
-  foldl: () => {},
-  foldr: () => {},
+  fold: noop,
+  foldl: noop,
+  foldr: noop,
   inspect: () => 'Nothing()',
   map: () => Nothing(),
   of: a => Maybe(a)
@@ -25,24 +19,24 @@ Nothing.of = () => Nothing()
 
 export const Just = a => ({
   ap: app => app.map(f => f(a)),
-  bimap: (left = identity, right = identity) => right(a),
-  cata: (f = { Right: identity }) => f.Right(a),
-  chain: (f = identity) => f(a),
+  bimap: (_, r) => iff(r,a),
+  cata: (f = Identity) => f.Right(a),
+  chain: (f) => iff(f,a),
   alt: () => Just(a),
   equals: id => id.cata({ Right: b => a === b }),
-  fold: (f = identity) => f(a),
-  foldl: () => {},
-  foldr: (f = identity) => f(a),
-  inspect: () => `Just(${a})`,
-  map: (f = identity) => Maybe(f(a)),
+  fold: (f) => iff(f, a),
+  foldl: noop,
+  foldr: (f) => iff(f, a),
+  inspect: () => 'Just(' + a + ')',
+  map: (f) => Maybe(iff(f, a)),
   of: a => Maybe(a)
 })
 
 Just.of = a => Just(a)
 
-const encase = (f = identity) => {
+const encase = (f) => {
   try {
-    return Maybe(f(null))
+    return Maybe(iff(f, null))
   } catch (_) {
     return Nothing()
   }
@@ -51,6 +45,10 @@ const encase = (f = identity) => {
 Just.encase = encase
 
 Nothing.encase = encase
+
+export const Maybe = a => (isNull(a) ? Nothing() : Just(a))
+
+Maybe.of = a => Maybe(a)
 
 Maybe.encase = encase
 
