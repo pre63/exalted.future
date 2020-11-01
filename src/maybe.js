@@ -2,10 +2,10 @@ import { Identity, isNull, noop, iff } from './id'
 
 export const Nothing = () => ({
   ap: () => Nothing(),
-  bimap: (l, _) => iff(l,null),
+  bimap: (l, _) => iff(l, null),
   cata: (f = Identity) => f.Left(null),
   chain: () => Nothing(),
-  alt: (f ) => Maybe(iff(f,null)),
+  alt: f => Maybe(iff(f, null)),
   equals: id => id.cata({ Right: b => isNull(b) }),
   fold: noop,
   foldl: noop,
@@ -19,22 +19,22 @@ Nothing.of = () => Nothing()
 
 export const Just = a => ({
   ap: app => app.map(f => f(a)),
-  bimap: (_, r) => iff(r,a),
+  bimap: (_, r) => iff(r, a),
   cata: (f = Identity) => f.Right(a),
-  chain: (f) => iff(f,a),
+  chain: f => iff(f, a),
   alt: () => Just(a),
   equals: id => id.cata({ Right: b => a === b }),
-  fold: (f) => iff(f, a),
+  fold: f => iff(f, a),
   foldl: noop,
-  foldr: (f) => iff(f, a),
+  foldr: f => iff(f, a),
   inspect: () => 'Just(' + a + ')',
-  map: (f) => Maybe(iff(f, a)),
+  map: f => Maybe(iff(f, a)),
   of: a => Maybe(a)
 })
 
 Just.of = a => Just(a)
 
-const encase = (f) => {
+const encase = f => {
   try {
     return Maybe(iff(f, null))
   } catch (_) {

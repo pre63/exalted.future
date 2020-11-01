@@ -1,19 +1,19 @@
-import { isNull , iff } from './id'
+import { isNull, iff } from './id'
 
 const eq = (a, r) => r.cata({ Right: b => a === b, Left: b => a === b })
 
 export const Right = a => ({
-  ap: app => (app.isLeft ? app : app.map((b) => iff(b,a))),
+  ap: app => (app.isLeft ? app : app.map(b => iff(b, a))),
   bimap: (_, r) => iff(r, a),
   cata: (f = Identity) => f.Right(a),
-  chain: (f) => iff(f,a),
-  equals: r => eq(a,r),
-  fold: (f) => iff(f, a),
-  foldl: (f) => iff(f, null),
-  foldr: (f) => iff(f,a),
+  chain: f => iff(f, a),
+  equals: r => eq(a, r),
+  fold: f => iff(f, a),
+  foldl: f => iff(f, null),
+  foldr: f => iff(f, a),
   inspect: () => 'Right(' + a + ')',
   isLeft: false,
-  map: (f) => Right(iff(f,a)),
+  map: f => Right(iff(f, a)),
   of: a => Right(a),
   swap: () => Left(a)
 })
@@ -26,10 +26,10 @@ export const Left = a => ({
   cata: (f = Identity) => f.Left(a),
   chain: () => Left(a),
   map: () => Left(a),
-  equals: l => eq(a,l),
-  fold: (f) => iff(f,a),
-  foldl: (f ) => iff(f,a),
-  foldr: (f ) => iff(f, null),
+  equals: l => eq(a, l),
+  fold: f => iff(f, a),
+  foldl: f => iff(f, a),
+  foldr: f => iff(f, null),
   inspect: () => 'Left(' + a + ')',
   isLeft: true,
   of: a => Left(a),
@@ -42,7 +42,7 @@ export const nullable = x => (isNull(x) ? Left(x) : Right(x))
 
 export const Either = (l, r) => [Left(l), Right(r)]
 
-const encase = (f) => {
+const encase = f => {
   try {
     return Right(iff(f, null))
   } catch (err) {

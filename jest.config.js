@@ -1,4 +1,4 @@
 export default {
-  roots: ['<rootDir>/specs'],
+  roots: ['<rootDir>/specs', '<rootDir>/ci'],
   transform: {}
 }
