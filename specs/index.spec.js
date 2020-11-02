@@ -239,18 +239,29 @@ describe('A Future', () => {
   it('should map over the data', () =>
     Future((reject, resolve) => resolve('hello exalted one'))
       .map(toUpperCase)
-      .fork(error => assert(false, error), data => assert(data === 'HELLO EXALTED ONE')))
+      .cata({
+        Left: error => assert(false, error),
+        Right: data => assert(data === 'HELLO EXALTED ONE')
+      }))
 
-  it("should return 'this worked' after fork", () =>
+  it('should chain over the data', () =>
+    Future((_, resolve) => resolve('hello exalted one'))
+      .map(toUpperCase)
+      .cata({
+        Left: error => assert(false, error),
+        Right: data => assert(data === 'HELLO EXALTED ONE')
+      }))
+
+  it("should return 'this worked' after cata", () =>
     assert(
-      Future((reject, resolve) => (resolve(true), 'this worked')).fork(
-        error => assert(false, error),
-        data => data
-      ),
+      Future((reject, resolve) => (resolve(true), 'this worked')).cata({
+        Left: error => assert(false, error),
+        Right: data => data
+      }),
       'this worked'
     ))
 
-  it('should not execute untill fork is called', () => {
+  it('should not execute untill cata is called', () => {
     /**
      * I'm using assignment here because I
      * have to track as a side effect, the
@@ -264,15 +275,16 @@ describe('A Future', () => {
 
     assert(!executed)
 
-    f.fork(
-      () => assert(false, 'should not get here'),
-      data => {
+    f.cata({
+      Left: () => assert(false, 'should not get here'),
+      Right: data => {
         assert(data === true)
         assert(executed === true)
-      })
+      }
+    })
   })
 
-  it('should not execute map untill fork is called', () => {
+  it('should not execute map untill cata is called', () => {
     /**
      * I'm using assignment here because I
      * have to track as a side effect, the
@@ -291,37 +303,63 @@ describe('A Future', () => {
 
     assert(!executed, 'should not execute')
 
-    f.fork(
-      () => assert(false, 'should not get here'),
-      data => {
+    f.cata({
+      Left: () => assert(false, 'should not get here'),
+      Right: data => {
         assert(data === true)
         assert(executed === true)
-      })
+      }
+    })
   })
 
   it('should handle promise fulfill', () => {
     const data = { fulfill: true }
     const promise = new Promise((fulfill, reject) => fulfill(data))
 
-    Future.fromPromise(promise).fork(
-      () => assert(false, 'promise should have fulfilled'),
-      val => assert(val === data))
+    Future.promise(promise).cata({
+      Left: () => assert(false, 'promise should have fulfilled'),
+      Right: val => assert(val === data)
+    })
   })
 
   it('should handle promise reject', () => {
     const data = { fulfill: false }
-    const promise = new Promise((fulfill, reject) => reject(data))
-    const f = Future.fromPromise(promise)
+    const promise = new Promise((_, reject) => reject(data))
+    const f = Future.promise(promise)
 
-    Future.fromPromise(promise).fork(
-      val => assert(val === data),
-      () => assert(false, 'promise should have rejected'))
+    Future.promise(promise).cata({
+      Left:  val => assert(val === data),
+      Right:() => assert(false, 'promise should have rejected')
+    })
+  })
+
+  it('should handle promise exception', () => {
+    const promise = new Promise((_1, _2) => {
+      throw Error('lol')
+    })
+
+    Future.promise(promise).cata({
+      Right: val => assert(false, 'promise should have rejected'),
+      Left: () => assert(true)
+    })
+  })
+
+  it('should handle  exception', () => {
+    Future.encase(() => {
+      throw Error('lol')
+    }).cata({
+      Right: val => assert(false, 'future should have rejected'),
+      Left: () => assert(true)
+    })
   })
 
   it('should chain futures from promises', () => {
-    Future.fromPromise(new Promise((fulfill, reject) => fulfill('1')))
-      .chain(data => Future.fromPromise(new Promise((fulfill, reject) => fulfill(data + '2'))))
-      .fork(() => assert(false, 'promise should have fulfilled'), val => assert(val === '12'))
+    Future.promise(new Promise((fulfill, reject) => fulfill('1')))
+      .chain(data => Future.promise(new Promise((fulfill, reject) => fulfill(data + '2'))))
+      .cata({
+        Left: () => assert(false, 'promise should have fulfilled'),
+        Right: val => assert(val === '12')
+      })
   })
 
   describe('all', () => {
@@ -330,12 +368,13 @@ describe('A Future', () => {
         Future.of('apple'),
         Future((left, right) => setTimeout(() => right('orange'), 1000)),
         Future.of('lemon')
-      ).fork(
-        () => done('something very bad has happened'),
-        ([apple, orange, lemon]) =>
+      ).cata({
+        Left: () => done('something very bad has happened'),
+        Right: ([apple, orange, lemon]) =>
           apple === 'apple' && orange === 'orange' && lemon === 'lemon'
             ? done()
-            : done(`fruits not are as expected; ${apple}, ${orange}, ${lemon}`))
+            : done(`fruits not are as expected; ${apple}, ${orange}, ${lemon}`)
+      })
     })
 
     it('should fail becuase a future left is called', done => {
@@ -343,9 +382,10 @@ describe('A Future', () => {
         Future.of('no no no no no'),
         Future(left => setTimeout(() => left('oops'), 500)),
         Future(left => setTimeout(() => left('noo'), 1000))
-      ).fork(
-        oops => (oops === 'oops' ? done() : done(`${oops} is not oops`)),
-        () => done(`oops should not get here`))
+      ).cata({
+        Left: oops => (oops === 'oops' ? done() : done(`${oops} is not oops`)),
+        Right: () => done(`oops should not get here`)
+      })
     })
 
     it('should handle an array as arguments', done => {
@@ -353,12 +393,13 @@ describe('A Future', () => {
         Future.of('apple'),
         Future((left, right) => setTimeout(() => right('orange'), 1000)),
         Future.of('lemon')
-      ]).fork(
-        () => done('something very bad has happened'),
-        ([apple, orange, lemon]) =>
+      ]).cata({
+        Left: () => done('something very bad has happened'),
+        Right: ([apple, orange, lemon]) =>
           apple === 'apple' && orange === 'orange' && lemon === 'lemon'
             ? done()
-            : done(`fruits not are as expected; ${apple}, ${orange}, ${lemon}`))
+            : done(`fruits not are as expected; ${apple}, ${orange}, ${lemon}`)
+      })
     })
   })
 })

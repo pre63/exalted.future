@@ -55,3 +55,5 @@ Either.encase = encase
 Right.encase = encase
 
 Left.encase = encase
+
+Either.error = error => right => (isNull(error) ? Right(right) : Left(error))

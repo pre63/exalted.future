@@ -299,15 +299,15 @@ Future((reject, resolve) => resolve('Yay'))
 //=> 'YAY'
 
 // Handle promises
-Future.fromPromise(fetch('https://api.awesome.com/catOfTheDay'))
+Future.promise(fetch('https://api.awesome.com/catOfTheDay'))
   .fork(
     err => log('There was an error fetching the cat of the day :('),
     cat => log('Cat of the day: ' + cat))
 //=> 'Cat of the day: Garfield'
 
 // Chain http calls
-Future.fromPromise(fetch('https://api.awesome.com/catOfTheDay'))
-  .chain(cat => Future.fromPromise(fetch(`https://api.catfacts.com/${cat}`)))
+Future.promise(fetch('https://api.awesome.com/catOfTheDay'))
+  .chain(cat => Future.promise(fetch(`https://api.catfacts.com/${cat}`)))
   .fork(
     err => log('There was an error fetching the cat of the day :('),
     facts => log('Facts for cat of the day: ' + facts))
