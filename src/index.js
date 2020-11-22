@@ -1,5 +1,4 @@
-export * from './id'
-export * from './compose'
+export * from './exalted'
 export * from './either'
 export * from './future'
 export * from './identity'

@@ -1,6 +1,6 @@
 {
   "name": "exalted.future",
-  "version": "0.0.15",
+  "version": "0.0.17",
   "description": "Exalted monadic library & functional fun, fantasy-land compliant, mostly.",
   "repository": "https://github.com/pre63/exalted.future.git",
   "author": "pre63",

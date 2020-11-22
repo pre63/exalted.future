@@ -1,3 +1,5 @@
+import { id } from './exalted'
+
 const chain = action => f =>
   Future((l, r) => {
     try {
@@ -8,9 +10,19 @@ const chain = action => f =>
   })
 
 export const Future = action => ({
+  ap: () => Future(action),
+  alt: () => Future(action),
+  bimap: () => Future(action),
   map: func => chain(action)(x => Future.of(func(x))),
+  cata: f => action(f.Left, f.Right),
   chain: chain(action),
-  cata: f => action(f.Left, f.Right)
+  equals: () => false,
+  fold: f => action(f, f),
+  foldl: f => action(f, id),
+  foldr: f => action(id, f),
+  inspect: () => 'Future(?)',
+  of: a => Future.of(a),
+  swap: () => Future(action)
 })
 
 Future.encase = f => {
@@ -25,7 +37,7 @@ Future.encase = f => {
 Future.of = x => Future((_, resolve) => resolve(x))
 
 Future.promise = promise =>
-  Future((reject, resolve) => Future.promise(promise.then(resolve, reject)))
+  Future((reject, resolve) => Future.promise(promise.then(resolve, reject).catch(reject)))
 
 const all = futures =>
   Future((left, right, errored = false) =>

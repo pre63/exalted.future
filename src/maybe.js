@@ -1,4 +1,4 @@
-import { Identity, isNull, noop, iff } from './id'
+import { Identity, isNull, noop, iff } from './exalted'
 
 export const Nothing = () => ({
   ap: () => Nothing(),
@@ -12,7 +12,8 @@ export const Nothing = () => ({
   foldr: noop,
   inspect: () => 'Nothing()',
   map: () => Nothing(),
-  of: a => Maybe(a)
+  of: a => Maybe(a),
+  swap: () => Just(a)
 })
 
 Nothing.of = () => Nothing()
@@ -29,7 +30,8 @@ export const Just = a => ({
   foldr: f => iff(f, a),
   inspect: () => 'Just(' + a + ')',
   map: f => Maybe(iff(f, a)),
-  of: a => Maybe(a)
+  of: a => Maybe(a),
+  swap: () => Nothing()
 })
 
 Just.of = a => Just(a)

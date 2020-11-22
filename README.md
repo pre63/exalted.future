@@ -1,18 +1,33 @@
 ![](https://badgen.net/bundlephobia/minzip/exalted.future)
 ![](https://badgen.net/bundlephobia/tree-shaking/exalted.future)
 ![](https://badgen.net/bundlephobia/dependency-count/exalted.future)
-![](https://badgen.net/travis/exalted.future)
-# exalted.future
 
-## *Experimental*
+*Experimental The api can change between versions.*
+
+# exalted.future
 
 A javascript and typescript monadic library & functional fun. [fantasy-land](https://github.com/fantasyland/fantasy-land) compliant, mostly.
 
-The style of monad object is inspired by [DrBoolean](https://github.com/DrBoolean) course on [egghead.io](https://egghead.io/courses/professor-frisby-introduces-composable-functional-javascript).
+The style of monad object is inspired by [DrBoolean](https://github.com/DrBoolean) course on [egghead.io](https://egghead.io/courses/professor-frisby-introduces-composable-functional-javascript) and his book [Mostly adequate guide to FP](https://github.com/MostlyAdequate/mostly-adequate-guide).
 
 The choice for `cata`, `encase`, `head`, `tail`, `last` is inspired by rametta's take on monads in [pratica](https://github.com/rametta/pratica).
 
 This is, in many ways, an evolution of [oncha](https://www.npmjs.com/package/oncha) which I wrote with other people many years ago and is no longer maintained.
+
+# Natural Transformation
+One of the main goals of the exalted.future is to make it possible to rely on natural transformation when composing Monads. So that you can write in one continuous flow your program, agnostic of the Monad you are working with. That is why `mapReduce`, `reduce`, `fold`, and `fork` use the same language, `cata`. You can always call cata on an object, and it will compute your results. The following example attempts to illustrate that. Regardless that the fetch succeeds or fails the outcome will be the same, indifferent to calling `cata` on Maybe, Either (Left|Right), or Future.
+```javascript
+Future.promise(fetch('https://jsonplaceholder.typicode.com/todos/1'))
+  .chain(response => Either.encase(() => response.json()))
+  .chain(Future.promise)
+  .chain(Maybe)
+  .map(todo => todo.title)
+  .map(t => t.toUpperCase())
+  .cata({
+    Left: e => console.log('oops', e),
+    Right: json => console.log(json)
+  })
+```
 
 # Install
 ``` bash
@@ -32,128 +47,54 @@ yarn add exalted.future
 * `fold` always folds on identity `a => a`, except when it does not like with the `Future`.
 * `Maybe.map` will return Nothing if the callback function returns null. In other words `Just(null)` is impossible, unless you call the 'static' constructor like this `Just.of(null)`. See [this pr](https://github.com/rametta/pratica/issues/15) for some explanation.
 * Left is not 100% applicative.
+* Not all functions are documented, so you are encouraged to read the source code, you'll find `bimap`, `swap`, `fold`, `foldr`, `foldf`.
 
 
+## Future
+A Future monad for async computation. `Left` is reject and `Right` is resolve. Because `Right` is always right and Left is not.
 
-## All
-These functions are available on all types.
-
-### ap
-[Apply][8]
-```
-chain :: (a -> b) -> b
-```
-```javascript
-Id(5).chain(a => Id(a))
-//=> Id(5)
-
-// You can use chain to join the monads.
-Id(Id(5)).chain(a => a)
-//=> Id(5)
-```
-
-### equals
-[Setoid][1]
-```
-equals :: Id -> Boolean
-```
-```javascript
-Id(1).equals(Id(1))
-//=> true
-
-Id(2).equals(Id(1))
-//=> false
-
-Id(2).equals(Id(1)) === Id(1).equals(Id(1))
-//=> false
-```
-
-### chain
-[Chain][7]
-```
-chain :: (a -> b) -> b
-```
-```javascript
-Id(5).chain(a => Id(a))
-//=> Id(5)
-
-// You can use chain to join the monads.
-Id(Id(5)).chain(a => a)
-//=> Id(5)
-```
-
-### map
-[Functor][3]
-```
-map :: (a -> b) -> Id of b
-```
-```javascript
-Id(7).map(a => a * 2)
-//=> Id(14)
-```
-
-### of
-[Applicative][4]
-```
-of :: a -> Id of a
-```
-```javascript
-Id(5).of(6)
-//=> Id(6)
-
-Id(5).of(Id(6))
-//=> Id(Id(6))
-```
-
-### fold
-[Foldable][6]
-```
-fold :: (a -> b) -> b
-```
-```javascript
-Id(5).fold()
-//=> 5
-
-Id(5).fold()
-//=> 6
-```
-
-### cata
-[Foldable][6]
-```
-cata :: ({ Left: () -> b, Right -> a -> a }) -> a | b
-```
-```javascript
-Id(5).cata({
-    Right: a => a
+``` javascript
+// Basic usage
+Future((err, ok) => ok('Yay'))
+  .map(res => res.toUpperString())
+  .cata({
+    Left: err => log(`Err: ${err}`),
+    Right: res => log(`Res: ${res}`)
   })
-//=> 5
+//=> 'YAY'
 
-Id(5).cata({
-    Right: a => a + 1
+// Handle promises
+Future.promise(fetch('https://api.awesome.com/catOfTheDay'))
+  .cata({
+    Left: err => log('There was an error fetching the cat of the day :('),
+    Right: cat => log('Cat of the day: ' + cat)
   })
-//=> 6
+//=> 'Cat of the day: Garfield'
 
-Right(5).cata({
-    Left: a => 8 // ignored 
-    Right: a => a + 1
+// Chain http calls
+Future.promise(fetch('https://api.awesome.com/catOfTheDay'))
+  .chain(cat => Future.promise(fetch(`https://api.catfacts.com/${cat}`)))
+  .cata({
+    Left: err => log('There was an error fetching the cat of the day :('),
+    Right: facts => log('Facts for cat of the day: ' + facts)
   })
-//=> 6
-
-Left(5).cata({
-    Left: a => a + 1 
-    Right: a => 8 // ignored
-  })
-//=> 6
+//=> 'Facts for cat of the day: Garfield is awesome.'
 ```
 
-### inspect
+### Future.all
+Concats all the results form the list of futures.
 ```
-inspect :: () -> String
+all :: ([Futures]) -> b
 ```
 ```javascript
-Id(5).inspect()
-//=> Id(5)
+Future.all(
+  Future.of('apple'),
+  Future((left, right) => setTimeout(() => right('orange'), 1000)),
+  Future.of('lemon')
+).cata({
+    Left: () => (),
+    Right: ([ apple, orange, lemon ]) => console.log(apple, orange, lemon)
+  }) //=> apple, orange, lemon
 ```
 
 ## Id
@@ -192,47 +133,6 @@ Maybe(null)
 //=> 'Maybe received a null'
 ```
 
-### alt
-Sets the value to cata on.
-```
-alt :: Any -> Nothing of Any
-```
-```javascript
-Maybe(1).alt(5).cata({
-    Right: a => a
-  })
-//=> 1
-
-Maybe(null).alt(5).cata({
-    Right: a => a
-  })
-//=> 5
-```
-
-### cata
-[Foldable][6]
-```
-cata :: ({ Left: () -> b, Right: a -> b }) -> a|b
-```
-```javascript
-Maybe(5).cata({
-    Right: a => a
-  })
-//=> 5
-
-Maybe(5).cata({
-    Left: () => { } // not called
-    Right: a => a + 1
-  })
-//=> 6
-
-Maybe(null).cata({
-    Left: () => 'there was a null'
-    Right: a => a + 1 // not called
-  })
-//=> there was a null
-```
-
 ## Either
 An Either monad and nullable, Left, Right.
 
@@ -269,12 +169,85 @@ extractEmail({ name: 'user' }
 //=> 'No email found!'
 ```
 
+# Functions
+The following functions are common to all monads types.
+
+### alt
+Sets the value to cata on.
+```
+alt :: Any -> Nothing of Any
+```
+```javascript
+Maybe(1).alt(5).cata({
+    Right: a => a
+  })
+//=> 1
+
+Maybe(null).alt(5).cata({
+    Right: a => a
+  })
+//=> 5
+```
+
+### ap
+[Apply][8]
+```
+chain :: (a -> b) -> b
+```
+```javascript
+Id(5).chain(a => Id(a))
+//=> Id(5)
+
+// You can use chain to join the monads.
+Id(Id(5)).chain(a => a)
+//=> Id(5)
+```
+
 ### cata
-[Foldable][6] - Folds foldable object.
+[Foldable][6]
 ```
 cata :: ({ Left: () -> b, Right -> a -> a }) -> a | b
 ```
 ```javascript
+Id(5).cata({
+    Right: a => a
+  })
+//=> 5
+
+Id(5).cata({
+    Right: a => a + 1
+  })
+//=> 6
+
+Right(5).cata({
+    Left: a => 8 // ignored 
+    Right: a => a + 1
+  })
+//=> 6
+
+Left(5).cata({
+    Left: a => a + 1 
+    Right: a => 8 // ignored
+  })
+//=> 6
+
+Maybe(5).cata({
+    Right: a => a
+  })
+//=> 5
+
+Maybe(5).cata({
+    Left: () => { } // not called
+    Right: a => a + 1
+  })
+//=> 6
+
+Maybe(null).cata({
+    Left: () => 'there was a null'
+    Right: a => a + 1 // not called
+  })
+//=> there was a null
+
 Right(5).cata({
     Left: () => 1,
     Right: a => a + 2
@@ -285,78 +258,21 @@ Left(5).cata(a => a + 1)
 //=> 6
 ```
 
-## Future
-A Future monad for async computation.
-
-``` javascript
-
-// Basic usage
-Future((reject, resolve) => resolve('Yay'))
-  .map(res => res.toUpperString())
-  .fork(
-    err => log(`Err: ${err}`),
-    res => log(`Res: ${res}`))
-//=> 'YAY'
-
-// Handle promises
-Future.promise(fetch('https://api.awesome.com/catOfTheDay'))
-  .fork(
-    err => log('There was an error fetching the cat of the day :('),
-    cat => log('Cat of the day: ' + cat))
-//=> 'Cat of the day: Garfield'
-
-// Chain http calls
-Future.promise(fetch('https://api.awesome.com/catOfTheDay'))
-  .chain(cat => Future.promise(fetch(`https://api.catfacts.com/${cat}`)))
-  .fork(
-    err => log('There was an error fetching the cat of the day :('),
-    facts => log('Facts for cat of the day: ' + facts))
-//=> 'Facts for cat of the day: Garfield is awesome.'
+### chain
+[Chain][7]
 ```
-
-### all
-Forks all the futures.
-```
-all :: ([Futures]) -> b
+chain :: (a -> b) -> b
 ```
 ```javascript
-Future.all(
-  Future.of('apple'),
-  Future((left, right) => setTimeout(() => right('orange'), 1000)),
-  Future.of('lemon')
-).fork(
-  () => (),
-  ([ apple, orange, lemon ]) =>
-    //=> apple, orange, lemon
-)
+Id(5).chain(a => Id(a))
+//=> Id(5)
+
+// You can use chain to join the monads.
+Id(Id(5)).chain(a => a)
+//=> Id(5)
 ```
 
-### fold
-[Foldable][6]
-Folds on identity.
-```
-fold :: (a -> b) -> b
-```
-```javascript
-Future.of(5).fold()
-//=> 5
-```
-
-### fork
-Executes the `Future` returning a `Future` of the resuts.
-```
-fork :: (a -> a, b -> b) -> Future of a | b
-```
-```javascript
-Future((left, right) => right(5)).fork(a => a, a => a)
-//=> Future of 5
-
-Future((left, right) => left(Error('this is an error'))).fork(a => a)
-//=> Future of Error
-```
-
-# Higher Order Utilities
-## compose
+### compose
 Compose takes n functions as arguments and return a function.
 
 ``` javascript
@@ -371,7 +287,42 @@ compose(path.normalize, path.join)('./exalted', '/one')
 //=> './exalted/one'
 ```
 
-## map
+### equals
+[Setoid][1]
+```
+equals :: Id -> Boolean
+```
+```javascript
+Id(1).equals(Id(1))
+//=> true
+
+Id(2).equals(Id(1))
+//=> false
+
+Id(2).equals(Id(1)) === Id(1).equals(Id(1))
+//=> false
+```
+
+### inspect
+```
+inspect :: () -> String
+```
+```javascript
+Id(5).inspect()
+//=> Id(5)
+```
+
+### map
+[Functor][3]
+```
+map :: (a -> b) -> Id of b
+```
+```javascript
+Id(7).map(a => a * 2)
+//=> Id(14)
+```
+
+### map (first class)
 Map as partial application and first class with arity support.
 
 ``` javascript
@@ -379,7 +330,20 @@ map(a => a + 1, a => a * 3)([1, 2, 3])
 //=> [4, 7, 10]
 ```
 
-## head, tail, last
+### of
+[Applicative][4]
+```
+of :: a -> Id of a
+```
+```javascript
+Id(5).of(6)
+//=> Id(6)
+
+Id(5).of(Id(6))
+//=> Id(Id(6))
+```
+
+### head, tail, last
 Returns a Maybe.
 ``` javascript
 head([1,2])
@@ -399,26 +363,23 @@ last([1,2,3])
 
 last([])
 //=> Nothing()
-
 ```
 
-## encase, encaseEither
+### Maybe.encase, Either.encase
 Returns `Left | Right`.
 ``` javascript
-encase(() => JSON.parse('["foo","bar","baz"]'))
+Maybe.encase(() => JSON.parse('["foo","bar","baz"]'))
 //=> Just(['foo','bar','baz'])
 
-encase(() => JSON.parse('['))
+Maybe.encase(() => JSON.parse('['))
 //=> Nothing()
 
-encaseEither(() => JSON.parse('["foo","bar","baz"]'))
+Either.encase(() => JSON.parse('["foo","bar","baz"]'))
 //=> Right(['foo','bar','baz'])
 
-encaseEither(() => JSON.parse('['))
+Either.encase(() => JSON.parse('['))
 //=> Left(new SyntaxError ('Unexpected end of JSON input'))
 ```
-
-
 
 [1]: https://github.com/fantasyland/fantasy-land#setoid
 [2]: https://github.com/fantasyland/fantasy-land#semigroup

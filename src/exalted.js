@@ -5,3 +5,15 @@ export const compose = (...rest) => (...a) =>
 
 export const map = (...functions) => functor =>
   functions.reduceRight((functor, f) => functor.map(f), functor)
+
+export const id = a => a
+
+export const noop = () => {}
+
+export const isNull = value => value === null || value === undefined
+
+export const Identity = { Left: id, Right: id }
+
+export const iff = (f = id, a) => f(a)
+
+export const log = (...a) => (console.log(...a), a[0])

@@ -328,8 +328,8 @@ describe('A Future', () => {
     const f = Future.promise(promise)
 
     Future.promise(promise).cata({
-      Left:  val => assert(val === data),
-      Right:() => assert(false, 'promise should have rejected')
+      Left: val => assert(val === data),
+      Right: () => assert(false, 'promise should have rejected')
     })
   })
 

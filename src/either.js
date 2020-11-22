@@ -1,9 +1,10 @@
-import { isNull, iff } from './id'
+import { isNull, iff } from './exalted'
 
 const eq = (a, r) => r.cata({ Right: b => a === b, Left: b => a === b })
 
 export const Right = a => ({
   ap: app => (app.isLeft ? app : app.map(b => iff(b, a))),
+  alt: () => Right(a),
   bimap: (_, r) => iff(r, a),
   cata: (f = Identity) => f.Right(a),
   chain: f => iff(f, a),
@@ -22,6 +23,7 @@ Right.of = a => Right(a)
 
 export const Left = a => ({
   ap: app => (app.isLeft ? app : Left(a)),
+  alt: () => Left(a),
   bimap: (l, _) => iff(l, a),
   cata: (f = Identity) => f.Left(a),
   chain: () => Left(a),
