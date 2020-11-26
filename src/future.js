@@ -9,9 +9,19 @@ const chain = action => f =>
     }
   })
 
+const alt = action => alt =>
+  Future((l, r) =>
+    Future(action).cata({
+      Left: a => {
+        const b = alt(a)
+        b.chain ? b.chain(r) : l(b)
+      },
+      Right: r
+    }))
+
 export const Future = action => ({
   ap: () => Future(action),
-  alt: () => Future(action),
+  alt: alt(action),
   bimap: () => Future(action),
   map: func => chain(action)(x => Future.of(func(x))),
   cata: f => action(f.Left, f.Right),

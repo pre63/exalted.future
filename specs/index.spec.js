@@ -362,6 +362,63 @@ describe('A Future', () => {
       })
   })
 
+  describe('alt', () => {
+    it('should handle Left', () => {
+      const promise = new Promise((_, reject) => reject('hello'))
+
+      Future.promise(promise)
+        .alt(m => Left(`Someone said ${m}?`))
+        .cata({
+          Left: m => assert(m === 'Someone said hello?'),
+          Right: val => assert(false, 'Promise rejected')
+        })
+    })
+
+    it('should handle Right', () => {
+      const promise = new Promise((_, reject) => reject('hello'))
+
+      Future.promise(promise)
+        .alt(m => Right(`Someone said ${m}?`))
+        .cata({
+          Left: () => assert(false, 'Promise rejected'),
+          Right: m => assert(m === 'Someone said hello?')
+        })
+    })
+
+    it('should handle ignore alt', () => {
+      const promise = new Promise(resolve => resolve('hello'))
+
+      Future.promise(promise)
+        .alt(m => Left(`Someone said ${m}?`))
+        .cata({
+          Left: () => assert(false, 'Promise rejected'),
+          Right: m => assert(m === 'hello')
+        })
+    })
+
+    it('should handle cata to Left', () => {
+      const promise = new Promise((_, reject) => reject('hello'))
+
+      Future.promise(promise)
+        .alt(m => Left(`Someone said ${m}?`))
+        .cata({
+          Left: m => assert(m === 'Someone said hello?'),
+          Right: val => assert(false, 'Should not cata to Right')
+        })
+    })
+
+    it('should handle ignore ()=>{}', () => {
+      const promise = new Promise((_, reject) => reject('hello'))
+
+      Future.promise(promise)
+        .alt(m => `Someone said ${m}?`)
+        .cata({
+          Left: m => assert(m === 'Someone said hello?'),
+          Right: () => assert(false, 'should be left')
+        })
+    })
+  })
+
   describe('all', () => {
     it('should wait for all fututes to execute', done => {
       Future.all(
