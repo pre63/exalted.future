@@ -15,7 +15,7 @@ The choice for `cata`, `encase`, `head`, `tail`, `last` is inspired by rametta's
 This is, in many ways, an evolution of [oncha](https://www.npmjs.com/package/oncha) which I wrote with other people many years ago and is no longer maintained.
 
 # Natural Transformation
-One of the main goals of the exalted.future is to make it possible to rely on natural transformation when composing Monads. So that you can write in one continuous flow your program, agnostic of the Monad you are working with. That is why `mapReduce`, `reduce`, `fold`, and `fork` use the same language, `cata`. You can always call cata on an object, and it will compute your results. The following example attempts to illustrate that. Regardless that the fetch succeeds or fails the outcome will be the same, indifferent to calling `cata` on Maybe, Either (Left|Right), or Future.
+One of the main goals of the exalted.future is to make it possible to rely on natural transformation when composing Monads. So that you can write in one continuous flow your program, agnostic of the Monad you are working with. That is why `flatMap`, `mapReduce`, `reduce`, `fold`, and `fork` use the same language, `cata`. You can always call cata on an object, and it will compute your results. The following example attempts to illustrate that. Regardless that the fetch succeeds or fails the outcome will be the same, indifferent to calling `cata` on Maybe, Either (Left|Right), or Future.
 ```javascript
 Future.promise(fetch('https://jsonplaceholder.typicode.com/todos/1'))
   .chain(response => Either.encase(() => response.json()))
