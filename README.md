@@ -6,7 +6,7 @@
 
 # exalted.future
 
-A javascript and typescript monadic library & functional fun. [fantasy-land](https://github.com/fantasyland/fantasy-land) compliant, mostly.
+A javascript monadic library & functional fun. [fantasy-land](https://github.com/fantasyland/fantasy-land) compliant, mostly.
 
 The style of monad object is inspired by [DrBoolean](https://github.com/DrBoolean) course on [egghead.io](https://egghead.io/courses/professor-frisby-introduces-composable-functional-javascript) and his book [Mostly adequate guide to FP](https://github.com/MostlyAdequate/mostly-adequate-guide).
 
