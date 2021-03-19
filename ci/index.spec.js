@@ -383,7 +383,7 @@ describe('A Future', () => {
         Future(left => setTimeout(() => left('oops'), 500)),
         Future(left => setTimeout(() => left('noo'), 1000))
       ).cata({
-        Left: oops => (oops === 'oops' ? done() : done(`${oops} is not oops`)),
+        Left: oops => (oops.length === 3 ? done() : done(`${oops} is not oops`)),
         Right: () => done(`oops should not get here`)
       })
     })
@@ -399,6 +399,21 @@ describe('A Future', () => {
           apple === 'apple' && orange === 'orange' && lemon === 'lemon'
             ? done()
             : done(`fruits not are as expected; ${apple}, ${orange}, ${lemon}`)
+      })
+    })
+
+    it('should not fail all future if one is rejected', done => {
+      Future.all([
+        Future.promise(
+          new Promise(() => {
+            throw 'A very bad error'
+          }, 1000)),
+        Future((left, right) => setTimeout(() => right('orange'), 1000)),
+        Future((left, right) => setTimeout(() => right('mango'), 1000))
+      ]).cata({
+        Left: errors =>
+          errors.length === 3 ? done() : done(`something very bad has happened: ${errors}`),
+        Right: fruits => done(`fruits not are as expected; ${fruits}`)
       })
     })
   })

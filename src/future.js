@@ -49,17 +49,20 @@ Future.of = x => Future((_, resolve) => resolve(x))
 Future.promise = promise =>
   Future((reject, resolve) => Future.promise(promise.then(resolve, reject).catch(reject)))
 
+const len = (r = []) => r.filter(a => a !== undefined).length
+
 const all = futures =>
   Future((left, right, errored = false) =>
     futures.reduce(
       (results, future, i) => (
         future.cata({
-          Left: error => !errored && ((errored = true), left(error)),
+          Left: error => (
+            (errored = true),
+            (results[i] = error || 'undefined error'),
+            len(results) === len(futures) && left(results)),
           Right: result => (
             (results[i] = result),
-            !errored &&
-              results.filter(a => a !== undefined).length === futures.length &&
-              right(results))
+            len(results) === len(futures) && (errored ? left(results) : right(results)))
         }),
         results
       ),
